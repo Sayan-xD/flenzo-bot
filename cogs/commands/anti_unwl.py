@@ -93,11 +93,3 @@ class Unwhitelist(commands.Cog):
             description=f"User <@!{member.id}> has been removed from the whitelist."
         )
         await ctx.send(embed=embed)
-
-
-"""
-@Author: Sonu Jana
-    + Discord: me.sonu
-    + Community: https://discord.gg/odx (Synapse Development)
-    + for any queries reach out Community or DM me.
-"""
