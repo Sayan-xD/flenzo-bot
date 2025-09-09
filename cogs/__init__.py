@@ -106,7 +106,7 @@ from .events.antibotadd import AntiBotAdd
 from .events.antichcr import AntiChannelCreate
 from .events.antichdl import AntiChannelDelete
 from .events.antichup import AntiChannelUpdate
-from .events..antieveryone import AntiEveryone
+from .events.antieveryone import AntiEveryone
 from .events.antiguild import AntiGuildUpdate
 from .events.antiIntegration import AntiIntegration
 from .events.antikick import AntiKick
