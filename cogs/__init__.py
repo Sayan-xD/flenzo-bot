@@ -83,7 +83,6 @@ from .flenzo.automod import sayan11111
 from .flenzo.moderation import sayan111111
 from .flenzo.music import sayanMusic
 from .flenzo.fun import sayan111111111
-from .flenzo.games import sayan1111111111
 from .flenzo.ticket import sayanticket
 from .flenzo.ignore import sayanIgnore
 from .flenzo.server import sayan11111111111
@@ -239,7 +238,6 @@ async def setup(bot: Flenzo):
     await bot.add_cog(sayanticket(bot))
     await bot.add_cog(sayanIgnore(bot))
     await bot.add_cog(sayanMedia(bot))
-    await bot.add_cog(sayan1111111111(bot))
     await bot.add_cog(sayan1111111111111(bot))
     await bot.add_cog(sayan11111111111111(bot))
     await bot.add_cog(Vanityroles69999(bot))
