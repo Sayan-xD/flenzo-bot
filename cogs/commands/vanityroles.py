@@ -1,67 +1,95 @@
 import discord
 from discord.ext import commands
 from utils.Tools import *
-import json
+import aiosqlite
+
 
 class Vanityroles(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
-        self.load_config()
 
-    def load_config(self):
-        with open('vanityroles.json', 'r') as f:
-            self.config = json.load(f)
+    async def cog_load(self):
+        """Ensure database and table exist when cog loads."""
+        async with aiosqlite.connect("db/vanityroles.db") as db:
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS vanityroles (
+                    guild_id INTEGER PRIMARY KEY,
+                    vanity TEXT NOT NULL,
+                    role_id INTEGER NOT NULL,
+                    channel_id INTEGER NOT NULL
+                )
+            """)
+            await db.commit()
 
-    def save_config(self):
-        with open('vanityroles.json', 'w') as f:
-            json.dump(self.config, f, indent=4)
+    async def get_config(self, guild_id: int):
+        async with aiosqlite.connect("db/vanityroles.db") as db:
+            cursor = await db.execute("SELECT vanity, role_id, channel_id FROM vanityroles WHERE guild_id = ?", (guild_id,))
+            row = await cursor.fetchone()
+            return row  # None if not set
+
+    async def set_config(self, guild_id: int, vanity: str, role_id: int, channel_id: int):
+        async with aiosqlite.connect("db/vanityroles.db") as db:
+            await db.execute("""
+                INSERT INTO vanityroles (guild_id, vanity, role_id, channel_id)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(guild_id) DO UPDATE SET
+                    vanity = excluded.vanity,
+                    role_id = excluded.role_id,
+                    channel_id = excluded.channel_id
+            """, (guild_id, vanity, role_id, channel_id))
+            await db.commit()
+
+    async def reset_config(self, guild_id: int):
+        async with aiosqlite.connect("db/vanityroles.db") as db:
+            await db.execute("DELETE FROM vanityroles WHERE guild_id = ?", (guild_id,))
+            await db.commit()
 
     @commands.Cog.listener()
-    async def on_presence_update(self, before, after):
+    async def on_presence_update(self, before: discord.Member, after: discord.Member):
         if after.guild is None:
             return
 
-        guild_id = str(after.guild.id)
+        config = await self.get_config(after.guild.id)
+        if not config:
+            return
 
-        if guild_id in self.config:
-            vanity_status = self.config[guild_id].get("vanity")
-            role_id = self.config[guild_id].get("role")
-            channel_id = self.config[guild_id].get("channel")
+        vanity_status, role_id, channel_id = config
+        role = after.guild.get_role(role_id)
+        channel = after.guild.get_channel(channel_id)
 
-            role = after.guild.get_role(role_id)
-            channel = after.guild.get_channel(channel_id)
+        before_activity_status = before.activity.name if before.activity else ""
+        after_activity_status = after.activity.name if after.activity else ""
 
-            before_activity_status = before.activity.name if before.activity else ""
-            after_activity_status = after.activity.name if after.activity else ""
+        if after_activity_status == vanity_status:
+            if role and channel:
+                if role not in after.roles:
+                    await after.add_roles(role)
+                    embed = discord.Embed(
+                        title="Vanity Added",
+                        description=f"{after.mention} has been assigned the **{role.name}** role for repping vanity `{vanity_status}`!",
+                        color=0x2f3136
+                    )
+                    embed.set_thumbnail(url=after.avatar.url if after.avatar else after.default_avatar.url)
+                    await channel.send(embed=embed)
 
-            if after_activity_status == vanity_status:
-                if role and channel:
-                    if role not in after.roles:
-                        await after.add_roles(role)
-                        embed = discord.Embed(
-                            title="Vanity Added",
-                            description=f"{after.mention} has been assigned the **{role.name}** role for repping vanity `{vanity_status}`!",
-                            color=0x2f3136
-                        )
-                        embed.set_thumbnail(url=after.avatar.url)
-                        await channel.send(embed=embed)
-
-            elif before_activity_status == vanity_status and after_activity_status != vanity_status:
-                if role in after.roles:
-                    await after.remove_roles(role)
+        elif before_activity_status == vanity_status and after_activity_status != vanity_status:
+            if role in after.roles:
+                await after.remove_roles(role)
+                if channel:
                     embed = discord.Embed(
                         title="Vanity Removed",
                         description=f"{after.mention} has been removed from the **{role.name}** role for no longer repping vanity `{vanity_status}`.",
                         color=0x2f3136
                     )
-                    embed.set_thumbnail(url=after.avatar.url)
+                    embed.set_thumbnail(url=after.avatar.url if after.avatar else after.default_avatar.url)
                     await channel.send(embed=embed)
-    
-    @commands.hybrid_group(name="vanityroles",
-                           description="Setupsvanity roles for the server.",
-                           help="Setups vanity roles for the server.",
-                           aliases=['vr'])
+
+    @commands.hybrid_group(
+        name="vanityroles",
+        description="Setup vanity roles for the server.",
+        help="Setup vanity roles for the server.",
+        aliases=['vr']
+    )
     @blacklist_check()
     @commands.has_permissions(administrator=True)
     async def __vr(self, ctx):
@@ -69,109 +97,101 @@ class Vanityroles(commands.Cog):
             await ctx.send_help(ctx.command)
             ctx.command.reset_cooldown(ctx)
 
-    @__vr.command(name="setup",
-                  description="Setups vanity role for the server.",
-                  help="Setups vanity role for the server.")
+    @__vr.command(name="setup", description="Setup vanity role for the server.")
     @blacklist_check()
     @commands.has_permissions(administrator=True)
-    async def _setup(self, ctx, vanity, role: discord.Role,
-                     channel: discord.TextChannel):
-        if ctx.author == ctx.guild.owner or ctx.guild.me.top_role <= ctx.author.top_role:
+    async def _setup(self, ctx, vanity: str, role: discord.Role, channel: discord.TextChannel):
+        if ctx.author == ctx.guild.owner or ctx.author.top_role > ctx.guild.me.top_role:
             if role.permissions.administrator or role.permissions.ban_members or role.permissions.kick_members:
                 embed1 = discord.Embed(
-                    description="Please select a role that doesn't have any dangerous permissions.",
-                    color=0x2f3136)
+                    description="<:icon_cross:1381448030481547315> Please select a role that doesn't have dangerous permissions.",
+                    color=0x2f3136
+                )
                 await ctx.send(embed=embed1)
             else:
-                pop = {
-                    "vanity": vanity,
-                    "role": role.id,
-                    "channel": channel.id
-                }
-                self.config[str(ctx.guild.id)] = pop
+                await self.set_config(ctx.guild.id, vanity, role.id, channel.id)
                 embed = discord.Embed(color=0x2f3136)
                 embed.set_author(
                     name=f"Vanity Roles Config For {ctx.guild.name}",
-                    icon_url=f"{ctx.author.avatar}")
-                embed.add_field(
-                    name="Vanity",
-                    value=f"{vanity}",
-                    inline=False)
-                embed.add_field(
-                    name="Role",
-                    value=f"{role.mention}",
-                    inline=False)
-                embed.add_field(
-                    name="Channel",
-                    value=f"{channel.mention}",
-                    inline=False)
+                    icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
+                )
+                embed.add_field(name="Vanity", value=f"{vanity}", inline=False)
+                embed.add_field(name="Role", value=f"{role.mention}", inline=False)
+                embed.add_field(name="Channel", value=f"{channel.mention}", inline=False)
                 await ctx.send(embed=embed)
-                self.save_config()
         else:
             hacker5 = discord.Embed(
-                description="""```diff\n - You must have Administrator permission.\n - Your top role should be above my top role. \n```""",
-                color=0x2f3136)
-            hacker5.set_author(name=f"{ctx.author.name}",
-                               icon_url=f"{ctx.author.avatar}")
+                description="""```diff
+- You must have Administrator permission.
+- Your top role should be above my top role. 
+```""",
+                color=0x2f3136
+            )
+            hacker5.set_author(
+                name=f"{ctx.author.name}",
+                icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
+            )
             await ctx.reply(embed=hacker5, mention_author=False)
 
-    @__vr.command(name="reset",
-                  description="Reset vanity role for the server.",
-                  help="Reset vanity role for the server.")
+    @__vr.command(name="reset", description="Reset vanity role for the server.")
     @blacklist_check()
     @commands.has_permissions(administrator=True)
     async def ___reset(self, ctx):
-        if ctx.author == ctx.guild.owner or ctx.guild.me.top_role <= ctx.author.top_role:
-            if str(ctx.guild.id) not in self.config:
+        if ctx.author == ctx.guild.owner or ctx.author.top_role > ctx.guild.me.top_role:
+            config = await self.get_config(ctx.guild.id)
+            if not config:
                 embed1 = discord.Embed(
                     description="<:icon_cross:1381448030481547315> This server doesn't have any vanity roles set up yet.",
-                    color=0x2f3136)
+                    color=0x2f3136
+                )
                 await ctx.reply(embed=embed1, mention_author=False)
             else:
-                self.config.pop(str(ctx.guild.id))
-                await ctx.reply("Vanity Role System Removed For This Guild.", mention_author=False)
-                self.save_config()
+                await self.reset_config(ctx.guild.id)
+                embed = discord.Embed(
+                    description="<:IconTick:1381245157759782975> Vanity Role System Removed For This Guild.",
+                    color=0x2f3136
+                )
+                await ctx.reply(embed=embed, mention_author=False)
         else:
             hacker5 = discord.Embed(
-                description="""```diff\n - You must have Administrator permission.\n - Your top role should be above my top role. \n```""",
-                color=0x2f3136)
-            hacker5.set_author(name=f"{ctx.author.name}",
-                               icon_url=f"{ctx.author.avatar}")
+                description="""```diff
+- You must have Administrator permission.
+- Your top role should be above my top role. 
+```""",
+                color=0x2f3136
+            )
+            hacker5.set_author(
+                name=f"{ctx.author.name}",
+                icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
+            )
             await ctx.reply(embed=hacker5, mention_author=False)
 
-    @__vr.command(name="show",
-                  aliases=['config'],
-                  description="Shows vanity role config for the server.",
-                  help="Shows vanity role config for the server.")
+    @__vr.command(name="show", aliases=['config'], description="Show vanity role config.")
     @blacklist_check()
     @commands.has_permissions(administrator=True)
     async def config(self, ctx):
-        if str(ctx.guild.id) not in self.config:
+        config = await self.get_config(ctx.guild.id)
+        if not config:
             embed1 = discord.Embed(
                 description="<:icon_cross:1381448030481547315> This server doesn't have any vanity roles set up yet.",
-                color=0x2f3136)
+                color=0x2f3136
+            )
             await ctx.reply(embed=embed1, mention_author=False)
         else:
-            vanity = self.config[str(ctx.guild.id)]["vanity"]
-            role = self.config[str(ctx.guild.id)]["role"]
-            channel = self.config[str(ctx.guild.id)]["channel"]
-            lundchannel = self.bot.get_channel(channel)
-            randirole = ctx.guild.get_role(role)
-            embed = discord.Embed(color=0x2f3136)
+            vanity, role_id, channel_id = config
+            role = ctx.guild.get_role(role_id)
+            channel = self.bot.get_channel(channel_id)
 
-            embed.add_field(name="Vanity",
-                            value=f"{vanity}",
-                            inline=False)
-            embed.add_field(name="Role",
-                            value=f"{randirole.mention}",
-                            inline=False)
-            embed.add_field(name="Channel",
-                            value=f"{lundchannel.mention}",
-                            inline=False)
-            embed.set_author(name=f"Vanity Role Config For {ctx.guild.name}",
-                             icon_url=f"{ctx.author.avatar}")
+            embed = discord.Embed(color=0x2f3136)
+            embed.add_field(name="Vanity", value=f"{vanity}", inline=False)
+            embed.add_field(name="Role", value=f"{role.mention if role else 'Deleted Role'}", inline=False)
+            embed.add_field(name="Channel", value=f"{channel.mention if channel else 'Deleted Channel'}", inline=False)
+            embed.set_author(
+                name=f"Vanity Role Config For {ctx.guild.name}",
+                icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
+            )
             await ctx.send(embed=embed, mention_author=False)
 
-# Add the setup function to add the cog to the bot
+
 def setup(bot):
-    bot.add_cog(Vanityroleslol(bot))
+    bot.add_cog(Vanityroles(bot))
