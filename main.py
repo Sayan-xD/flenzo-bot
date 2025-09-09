@@ -27,7 +27,7 @@ os.environ["JISHAKU_FORCE_PAGINATOR"] = "True"
 # ────────────────────────────── Bot Initialization ──────────────────────────────
 client = Flenzo()
 tree = client.tree
-TOKEN = ""  # Replace with your real token
+TOKEN = os.getenv("TOKEN")  # Replace with your real token
 
 # ──────────────── Lavalink Node Config (Danbot) ────────────────
 WAVELINK_NODE = {
