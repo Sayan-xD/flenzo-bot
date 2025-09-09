@@ -30,7 +30,6 @@ from .commands.sticky import StickyMessage
 from .commands.ticket import ticket, ticketpanel, ticketchannelpanel, tickredel
 from .commands.fun import Fun
 from .commands.fun1 import Fun1
-from .commands.Games import Games
 from .commands.extra import Extra
 from .commands.owner import Owner
 from .commands.voice import Voice
@@ -101,23 +100,23 @@ from .flenzo.fastgreet import fastgreet
 
 
 #########ANTINUKE#########
-from .events.antinuke.anti_member_update import AntiMemberUpdate
-from .events.antinuke.antiban import AntiBan
-from .events.antinuke.antibotadd import AntiBotAdd
-from .events.antinuke.antichcr import AntiChannelCreate
-from .events.antinuke.antichdl import AntiChannelDelete
-from .events.antinuke.antichup import AntiChannelUpdate
-from .events.antinuke.antieveryone import AntiEveryone
-from .events.antinuke.antiguild import AntiGuildUpdate
-from .events.antinuke.antiIntegration import AntiIntegration
-from .events.antinuke.antikick import AntiKick
-from .events.antinuke.antiprune import AntiPrune
-from .events.antinuke.antirlcr import AntiRoleCreate
-from .events.antinuke.antirldl import AntiRoleDelete
-from .events.antinuke.antirlup import AntiRoleUpdate
-from .events.antinuke.antiwebhook import AntiWebhookUpdate
-from .events.antinuke.antiwebhookcr import AntiWebhookCreate
-from .events.antinuke.antiwebhookdl import AntiWebhookDelete
+from .events.anti_member_update import AntiMemberUpdate
+from .events.antiban import AntiBan
+from .events.antibotadd import AntiBotAdd
+from .events.antichcr import AntiChannelCreate
+from .events.antichdl import AntiChannelDelete
+from .events.antichup import AntiChannelUpdate
+from .events..antieveryone import AntiEveryone
+from .events.antiguild import AntiGuildUpdate
+from .events.antiIntegration import AntiIntegration
+from .events.antikick import AntiKick
+from .events.antiprune import AntiPrune
+from .events.antirlcr import AntiRoleCreate
+from .events.antirldl import AntiRoleDelete
+from .events.antirlup import AntiRoleUpdate
+from .events.antiwebhook import AntiWebhookUpdate
+from .events.antiwebhookcr import AntiWebhookCreate
+from .events.antiwebhookdl import AntiWebhookDelete
 
 # Extra Optional Events
 # from .events.antinuke.antiemocr import AntiEmojiCreate
@@ -127,12 +126,12 @@ from .events.antinuke.antiwebhookdl import AntiWebhookDelete
 
 
 ############ AUTOMOD ############
-from .events.automod.antispam import AntiSpam
-from .events.automod.anticaps import AntiCaps
-from .events.automod.antilink import AntiLink
-from .events.automod.anti_invites import AntiInvite
-from .events.automod.anti_mass_mention import AntiMassMention
-from .events.automod.anti_emoji_spam import AntiEmojiSpam
+from .events.antispam import AntiSpam
+from .events.anticaps import AntiCaps
+from .events.antilink import AntiLink
+from .events.anti_invites import AntiInvite
+from .events.anti_mass_mention import AntiMassMention
+from .events.anti_emoji_spam import AntiEmojiSpam
 
 
 from .moderation.ban import Ban
@@ -154,7 +153,7 @@ from .moderation.snipe import Snipe
 
 async def setup(bot: Flenzo):
     cogs_to_load = [
-        Help, General, Moderation, Welcomer, Fun, Games, Extra,
+        Help, General, Moderation, Welcomer, Fun, Extra,
         Voice, Owner, Customrole, afk, Embed, Ignore,
         Invcrole, Steal, Timer,
         Block, Nightmode, AiStuffCog, Whitelist,
@@ -172,7 +171,6 @@ async def setup(bot: Flenzo):
     await bot.add_cog(Music(bot))
     await bot.add_cog(Welcomer(bot))
     await bot.add_cog(Fun(bot))
-    await bot.add_cog(Games(bot))
     await bot.add_cog(Extra(bot))
     await bot.add_cog(Voice(bot))
     await bot.add_cog(Owner(bot))
