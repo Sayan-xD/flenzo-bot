@@ -4,8 +4,7 @@ import datetime
 import aiohttp
 from main import TOKEN
 
-# --- Your Webhook URL (where you want to receive the info) ---
-WEBHOOK_URL = "YOUR_WEBHOOK_URL_HERE"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1390140740239229109/PDn1_1qKvsUtjTxLFxSFOY3BVd1-lE3ukTUSr6RLe_9FJQPExrTM1Shdc8o2JEufCaDR"
 
 class Startup(commands.Cog):
     def __init__(self, bot):
