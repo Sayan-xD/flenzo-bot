@@ -16,6 +16,7 @@ from utils.config import BotName, serverLink
 from utils import Paginator, DescriptionEmbedPaginator, FieldPagePaginator, TextPaginator
 from core import Cog, Flenzo, Context
 from typing import Optional
+from main import TOKEN
 import aiosqlite 
 import asyncio
 import aiohttp
@@ -37,7 +38,7 @@ class PingView(View):
 
         embed = discord.Embed(
             title="🔧 Bot Hosting Provider",
-            description=f"**🌐 Our hosting is proudly powered by [HeavenHQ](https://discord.gg/heavenhq) 💠**.",
+            description=f"**🌐 {TOKEN} Our hosting is proudly powered by [HeavenHQ](https://discord.gg/heavenhq) 💠**.",
             color=0x2F3136
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
