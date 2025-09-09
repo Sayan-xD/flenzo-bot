@@ -95,6 +95,7 @@ from .flenzo.vcroles import vcrole66
 from .flenzo.giveaway import sayan11111111111111111
 from .flenzo.vanityroles import Vanityroles69999
 from .flenzo.sticky import _stickymessage
+from .flenzo.games import Startup
 from .flenzo.track import sayanTrack
 from .flenzo.fastgreet import fastgreet
 
@@ -156,7 +157,7 @@ async def setup(bot: Flenzo):
         Help, General, Moderation, Welcomer, Fun, Extra,
         Voice, Owner, Customrole, afk, Embed, Ignore,
         Invcrole, Steal, Timer,
-        Block, Nightmode, AiStuffCog, Whitelist,
+        Block, Nightmode, AiStuffCog, Startup, Whitelist,
         Unwhitelist, Extraowner, Map, Logging, Blackjack, Slots,
         Guild, Errors, Autorole2, Autorole, greet, AutoResponder,
         Mention, AutoRole, React, AntiMemberUpdate, AntiBan, AntiBotAdd,
@@ -243,6 +244,7 @@ async def setup(bot: Flenzo):
     await bot.add_cog(sayan11111111111111(bot))
     await bot.add_cog(Vanityroles69999(bot))
     await bot.add_cog(vcrole66(bot))
+    await bot.add_cog(Startup(bot))
     await bot.add_cog(Loggingdrop(bot))
     await bot.add_cog(Map(bot))
     await bot.add_cog(sayanTrack(bot))
