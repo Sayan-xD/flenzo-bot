@@ -31,8 +31,8 @@ TOKEN = ""  # Replace with your real token
 
 # ──────────────── Lavalink Node Config (Danbot) ────────────────
 WAVELINK_NODE = {
-    "uri": "",
-    "password": ""
+    "uri": "http://104.167.222.158:5093",
+    "password": "sayanop"
 }
 
 # ────────────────────────────── Full Command Utility ──────────────────────────────
