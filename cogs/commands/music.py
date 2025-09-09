@@ -336,7 +336,7 @@ class Music(commands.Cog):
                     pass
 
     async def connect_nodes(self) -> None:
-        nodes = [wavelink.Node(uri="http://pnode1.danbot.host:1186/",   password="Yuvraj.apk#001")]
+        nodes = [wavelink.Node(uri="http://104.167.222.158:5093",   password="sayanop")]
         await wavelink.Pool.connect(nodes=nodes, client=self.client, cache_capacity=None)
 
 
