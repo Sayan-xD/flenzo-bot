@@ -100,23 +100,23 @@ from .flenzo.fastgreet import fastgreet
 
 
 #########ANTINUKE#########
-from .events.anti_member_update import AntiMemberUpdate
-from .events.antiban import AntiBan
-from .events.antibotadd import AntiBotAdd
-from .events.antichcr import AntiChannelCreate
-from .events.antichdl import AntiChannelDelete
-from .events.antichup import AntiChannelUpdate
-from .events.antieveryone import AntiEveryone
-from .events.antiguild import AntiGuildUpdate
-from .events.antiIntegration import AntiIntegration
-from .events.antikick import AntiKick
-from .events.antiprune import AntiPrune
-from .events.antirlcr import AntiRoleCreate
-from .events.antirldl import AntiRoleDelete
-from .events.antirlup import AntiRoleUpdate
-from .events.antiwebhook import AntiWebhookUpdate
-from .events.antiwebhookcr import AntiWebhookCreate
-from .events.antiwebhookdl import AntiWebhookDelete
+from .antinuke.anti_member_update import AntiMemberUpdate
+from .antinuke.antiban import AntiBan
+from .antinuke.antibotadd import AntiBotAdd
+from .antinuke.antichcr import AntiChannelCreate
+from .antinuke.antichdl import AntiChannelDelete
+from .antinuke.antichup import AntiChannelUpdate
+from .antinuke.antieveryone import AntiEveryone
+from .antinuke.antiguild import AntiGuildUpdate
+from .antinuke.antiIntegration import AntiIntegration
+from .antinuke.antikick import AntiKick
+from .antinuke.antiprune import AntiPrune
+from .antinuke.antirlcr import AntiRoleCreate
+from .antinuke.antirldl import AntiRoleDelete
+from .antinuke.antirlup import AntiRoleUpdate
+from .antinuke.antiwebhook import AntiWebhookUpdate
+from .antinuke.antiwebhookcr import AntiWebhookCreate
+from .antinuke.antiwebhookdl import AntiWebhookDelete
 
 # Extra Optional Events
 # from .events.antinuke.antiemocr import AntiEmojiCreate
@@ -126,12 +126,12 @@ from .events.antiwebhookdl import AntiWebhookDelete
 
 
 ############ AUTOMOD ############
-from .events.antispam import AntiSpam
-from .events.anticaps import AntiCaps
-from .events.antilink import AntiLink
-from .events.anti_invites import AntiInvite
-from .events.anti_mass_mention import AntiMassMention
-from .events.anti_emoji_spam import AntiEmojiSpam
+from .automod.antispam import AntiSpam
+from .automod.anticaps import AntiCaps
+from .automod.antilink import AntiLink
+from .automod.anti_invites import AntiInvite
+from .automod.anti_mass_mention import AntiMassMention
+from .automod.anti_emoji_spam import AntiEmojiSpam
 
 
 from .moderation.ban import Ban
