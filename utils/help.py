@@ -15,12 +15,14 @@ class Dropdown(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         if self.invoker == interaction.user:
             index = self.view.find_index_from_select(self.values[0])
-            if not index:
+            if index is None:
                 index = 0
             await self.view.set_page(index, interaction)
         else:
             await interaction.response.send_message(
-                "Uh oh! That message doesn't belong to you. You must run this command to interact with it.", ephemeral=True)
+                "Uh oh! That message doesn't belong to you. You must run this command to interact with it.",
+                ephemeral=True
+            )
 
 
 class Button(discord.ui.Button):
@@ -43,7 +45,9 @@ class Button(discord.ui.Button):
                 await self.command(interaction)
         else:
             await interaction.response.send_message(
-                "Uh oh! That message doesn't belong to you. You must run this command to interact with it.", ephemeral=True)
+                "Uh oh! That message doesn't belong to you. You must run this command to interact with it.",
+                ephemeral=True
+            )
 
 
 class View(discord.ui.View):
@@ -56,24 +60,49 @@ class View(discord.ui.View):
         self.options, self.embeds, self.total_pages = self.gen_embeds()
 
         if ui == 0:
-            self.add_item(Dropdown(ctx=self.ctx, options=self.options))
+            self.add_dropdowns()
         elif ui == 1:
             self.buttons = self.add_buttons()
         else:
             self.buttons = self.add_buttons()
-            self.add_item(Dropdown(ctx=self.ctx, options=self.options))
+            self.add_dropdowns()
 
     def add_buttons(self):
-        self.homeB = Button(label="", style=discord.ButtonStyle.secondary, emoji="<:MekoArrowLeft:1324414421933621361>", command=self.set_page, args=0, ctx=self.ctx)
-        self.backB = Button(label="", style=discord.ButtonStyle.secondary, emoji="<:left_icons:1322836500315897886>", command=self.to_page, args=-1, ctx=self.ctx)
-        self.quitB = Button(label="", style=discord.ButtonStyle.danger, emoji="<:bin:1322836099550281849>", command=self.quit, ctx=self.ctx)
-        self.nextB = Button(label="", style=discord.ButtonStyle.secondary, emoji="<:right_icons:1322836503243653120>", command=self.to_page, args=1, ctx=self.ctx)
-        self.lastB = Button(label="", style=discord.ButtonStyle.secondary, emoji="<:MekoArrowRight:1324414179658039389>", command=self.set_last_page, ctx=self.ctx)
+        self.homeB = Button(label="", style=discord.ButtonStyle.secondary,
+                            emoji="<:MekoArrowLeft:1324414421933621361>", command=self.set_page, args=0, ctx=self.ctx)
+        self.backB = Button(label="", style=discord.ButtonStyle.secondary,
+                            emoji="<:left_icons:1322836500315897886>", command=self.to_page, args=-1, ctx=self.ctx)
+        self.quitB = Button(label="", style=discord.ButtonStyle.danger,
+                            emoji="<:bin:1322836099550281849>", command=self.quit, ctx=self.ctx)
+        self.nextB = Button(label="", style=discord.ButtonStyle.secondary,
+                            emoji="<:right_icons:1322836503243653120>", command=self.to_page, args=1, ctx=self.ctx)
+        self.lastB = Button(label="", style=discord.ButtonStyle.secondary,
+                            emoji="<:MekoArrowRight:1324414179658039389>", command=self.set_last_page, ctx=self.ctx)
 
         buttons = [self.homeB, self.backB, self.quitB, self.nextB, self.lastB]
         for button in buttons:
             self.add_item(button)
         return buttons
+
+    def add_dropdowns(self):
+        # Always include Home in both menus
+        home_opt = self.options[0]
+
+        # First 10 modules + Home
+        main_opts = [home_opt] + self.options[1:11]
+
+        # Remaining modules + Home
+        extra_opts = [home_opt] + self.options[11:]
+
+        if main_opts:
+            dropdown1 = Dropdown(ctx=self.ctx, options=main_opts)
+            dropdown1.placeholder = "📖 Main Modules"
+            self.add_item(dropdown1)
+
+        if len(self.options) > 11:
+            dropdown2 = Dropdown(ctx=self.ctx, options=extra_opts)
+            dropdown2.placeholder = "📚 Extra Modules"
+            self.add_item(dropdown2)
 
     def find_index_from_select(self, value):
         i = 0
@@ -83,6 +112,10 @@ class View(discord.ui.View):
                 if label == value:
                     return i + 1
                 i += 1
+        # Home fallback
+        if value == "Home":
+            return 0
+        return None
 
     def get_cogs(self):
         return list(self.mapping.keys())
@@ -91,6 +124,7 @@ class View(discord.ui.View):
         options, embeds = [], []
         total_pages = 0
 
+        # Home
         options.append(
             discord.SelectOption(label="Home",
                                  emoji='<:zz_home:1324754138067636315>', description=""))
@@ -115,20 +149,24 @@ class View(discord.ui.View):
                 embeds.append(embed)
                 total_pages += 1
 
-        self.home.set_footer(text="Powerd By Flenzo Development",
+        self.home.set_footer(text="Powered By Flenzo Development",
                              icon_url=f"{self.ctx.bot.user.avatar.url}")
 
         return options, embeds, total_pages
 
     async def quit(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await interaction.delete_original_response()
+        try:
+            await interaction.delete_original_response()
+        except discord.NotFound:
+            pass
 
     async def to_page(self, page: int, interaction: discord.Interaction):
-        if not self.index + page < 0 or not self.index + page > len(self.options):
+        new_index = self.index + page
+        if 0 <= new_index < len(self.options):
             await self.set_index(page)
             embed = self.embeds[self.index]
-            embed.set_footer(text="Made By Flenzo Development",
+            embed.set_footer(text="Powered By Flenzo Development",
                              icon_url=f"{self.ctx.bot.user.avatar.url}")
             await interaction.response.edit_message(embed=embed, view=self)
 
@@ -139,14 +177,15 @@ class View(discord.ui.View):
     async def set_index(self, page):
         self.index += page
         if self.buttons:
+            # enable all first
             for button in self.buttons[0:-1]:
                 button.disabled = False
+            # disable at boundaries
             if self.index == 0:
                 self.backB.disabled = True
+                self.homeB.disabled = True
             elif self.index == len(self.options) - 1:
                 self.nextB.disabled = True
 
     async def set_last_page(self, interaction: discord.Interaction):
         await self.set_page(len(self.options) - 1, interaction)
-
-    
